@@ -74,7 +74,7 @@
     "watch-js": "nodemon -e js -x \"npm run js\"",
     "watch-pug": "node build/watch-pug.js",
     "watch-views": "nodemon -e html -x \"npm-run-all --sequential copy-views build-vendors svg localhost-reload\"",
-    "start": "npm-run-all --sequential build localhost",
+    "start": "node server.js",
     "postinstall": "npm-run-all build-clean --parallel css js copy --sequential build-vendors"
   },
   "dependencies": {
