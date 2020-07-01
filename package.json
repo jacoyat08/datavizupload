@@ -16,9 +16,7 @@
     "ui kit",
     "webapp"
   ],
-  "contributors": [
-
-  ],
+  "contributors": [],
   "main": "src/index.html",
   "scripts": {
     "build": "npm-run-all build-clean --parallel css js copy --sequential build-vendors",

@@ -277,12 +277,25 @@
                           <div class="tab-pane active" id="bar" role="tabpanel">
                             <svg width="960" height="500" id="barchart"></svg>
                           </div>
-                          <div class="tab-pane" id="box" role="tabpanel">Box</div>
-                          <div class="tab-pane" id="histogram" role="tabpanel">Histogram</div>
-                          <div class="tab-pane" id="scatter" role="tabpanel">Scatter</div>
-                          <div class="tab-pane" id="line" role="tabpanel">Line</div>
-                          <div class="tab-pane" id="heat" role="tabpanel">Heat</div>
-                          <div class="tab-pane" id="pie" role="tabpanel">Pie</div>
+                          <div class="tab-pane" id="box" role="tabpanel">
+                            <svg width="960" height="500" id="plotchart"></svg>
+                          </div>
+                          <div class="tab-pane" id="histogram" role="tabpanel">
+                            <svg width="960" height="500" id="histogramchart"></svg>
+                          </div>
+                          <div class="tab-pane" id="scatter" role="tabpanel">
+                            <svg width="960" height="500" id="scatterchart"></svg>
+                          </div>
+                          <div class="tab-pane" id="line" role="tabpanel">
+                            <svg width="960" height="500" id="linechart"></svg>
+
+                          </div>
+                          <div class="tab-pane" id="heat" role="tabpanel">
+                            <svg width="960" height="500" id="heatchart"></svg>
+                          </div>
+                          <div class="tab-pane" id="pie" role="tabpanel">
+                            <svg width="960" height="500" id="piechart"></svg>
+                          </div>
 
                         </div>
                       </div>
@@ -830,6 +843,17 @@
     <script src="node_modules/@coreui/chartjs/dist/js/coreui-chartjs.bundle.js"></script>
     <script src="node_modules/d3/dist/d3.js"></script>
     <script src="node_modules/@coreui/utils/dist/coreui-utils.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <script src="js/d3-tip.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/bar.js"></script>
+    <script src="js/plot.js"></script>
+    <script src="js/scatter.js"></script>
+    <script src="js/line.js"></script>
+    <script src="js/heat.js"></script>
+    <script src="js/pie.js"></script>
+    <script src="js/histogram.js"></script>
+
   </body>
 </html>
