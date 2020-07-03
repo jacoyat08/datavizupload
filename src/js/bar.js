@@ -23,13 +23,24 @@ var barSVG = d3.select("#barchart"),
        for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
        return d;
    }).then(function(data) {
+     var x_column = 'day';
+     var y_column = 'cyl';
+     var groupedData = _.groupBy(data, 'day');
+     var groupedKeys = Object.keys(groupedData);
+     var data = groupedKeys.map((item, i) => {
+       var obj = {};
+       obj.x_column = item;
+       obj[groupedData[item][0].name] = groupedData[item][0][y_column];
+       obj[groupedData[item][1].name] = groupedData[item][1][y_column];
+       return obj;
+     });
        console.log(data);
-
-       var keys = data.columns.slice(1);
+       var columns = Object.keys(data[0]);
+       var keys = columns.slice(1);
 
        console.log('keys');
        console.log(keys);
-       x0.domain(data.map(function(d) { return d.State; }));
+       x0.domain(data.map(function(d) { return d.x_column; }));
        x1.domain(keys).rangeRound([0, x0.bandwidth()]);
        y.domain([0, d3.max(data, function(d) { return d3.max(keys, function(key) { return d[key]; }); })]).nice();
 
@@ -38,7 +49,7 @@ var barSVG = d3.select("#barchart"),
            .data(data)
            .enter().append("g")
            .attr("class","bar")
-           .attr("transform", function(d) { return "translate(" + x0(d.State) + ",0)"; })
+           .attr("transform", function(d) { return "translate(" + x0(d.x_column) + ",0)"; })
            .selectAll("rect")
            .data(function(d) { return keys.map(function(key) { return {key: key, value: d[key]}; }); })
            .enter().append("rect")

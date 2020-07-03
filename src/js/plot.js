@@ -21,23 +21,34 @@ var yAxisBox = plotSVG.append("g").attr("transform", "translate(40,0)");
 var xAxisBox = plotSVG.append("g").attr("transform", "translate(40,0)");
 
 // Load and process data
-d3.json("assets/json/plot.json").then(groupCounts => {
+d3.csv("assets/csv/bardata.csv", function(d, i, columns) {
+    for (var i = 1, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+    return d;
+}).then(data => {
+    var y_column = 'cyl';
+    var groupCounts = _.groupBy(data, 'name');
+
     // Select all values into one Array for axis scaling (min/ max)
     // and sort group counts so quantile methods work
     var globalCounts = [];
     for (var key in groupCounts) {
-        var groupCount = groupCounts[key]
+        var groupCount = groupCounts[key].map(function(item){
+          return item[y_column];
+        });
         groupCounts[key] = groupCount.sort(sortNumber);
         groupCounts[key].forEach(element => {
             globalCounts.push(element);
         });
     }
 
+    console.log(globalCounts);
+
     // Prepare the data for the box plots
     var plotData = [];
     var colorIndex = 0.1;
     var colorIndexStepSize = 0.08;
     for (var [key, groupCount] of Object.entries(groupCounts)) {
+
         var record = {};
         var localMin = d3.min(groupCount);
         var localMax = d3.max(groupCount);
@@ -52,6 +63,8 @@ d3.json("assets/json/plot.json").then(groupCounts => {
         colorIndex += colorIndexStepSize;
     }
 
+
+    console.log(plotData);
     // Create Tooltips
     var tip = d3.tip().attr('class', 'd3-tip').direction('e').offset([0,5])
         .html(function(d) {
