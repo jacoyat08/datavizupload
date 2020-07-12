@@ -1,5 +1,6 @@
-function drawHistogram(data, x_column, y_column){
+function drawHistogram(data, x_column, y_column, bins){
   // set the dimensions and margins of the graph
+  console.log(bins);
   var margin = {top: 10, right: 30, bottom: 30, left: 40},
       width = 960 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom;
@@ -12,18 +13,20 @@ function drawHistogram(data, x_column, y_column){
   var x_domains = _.uniq(keys);
   // set the ranges
   // set the ranges
+
+
   var x = d3.scaleBand()
             .domain(x_domains)
             .range([0, width]);
   var y = d3.scaleLinear()
             .range([height, 0]);
 
-console.log([x_domains[0], x_domains[x_domains.length - 1]])
+
   // set the parameters for the histogram
   var histogram = d3.histogram()
       .value(function(d) { return d[x_column]; })
       .domain([x_domains[0], x_domains[x_domains.length - 1]])
-      .thresholds(x_domains);
+      .thresholds(bins);
   d3.select("#mainchart").remove();
   // append the histogramSVG object to the body of the page
   // append a 'group' element to 'histogramSVG'
@@ -42,7 +45,6 @@ console.log([x_domains[0], x_domains[x_domains.length - 1]])
       // group the data for the bars
       var bins = histogram(data);
 
-      console.log(bins);
 
       // Scale the range of the data in the y domain
       y.domain([0, d3.max(bins, function(d) { return d.length; })]);

@@ -26,6 +26,7 @@ function fileChosen(e){
 
        window.json_data = json;
 
+
   };
   reader.readAsBinaryString(filefield.files[0]);
 
@@ -44,7 +45,7 @@ function onsubmit(){
       drawPlotChart(window.json_data, xSelectField, ySelectField);
       break;
     case "histogram":
-      drawHistogram(window.json_data, xSelectField, ySelectField);
+      drawHistogram(window.json_data, xSelectField, ySelectField, window.bins);
       break;
     default:
 
@@ -54,11 +55,35 @@ function onsubmit(){
 
 
 $(document).ready(function () {
+  $("#bins-control").hide();
+
   // Listen to submit event on the <form> itself!
   $('#selectfile').submit(function (e) {
 
     e.preventDefault();
     onsubmit();
+  });
+
+  $('#chart_type').change(function(e){
+
+    if(e.target.value == 'histogram'){
+      window.bins = Math.round(window.json_data.length / 2);
+      $("#bins-control").show();
+      $( "#slider" ).slider(
+        {
+          change: function( event, ui ) {
+            window.bins = ui.value;
+            $('#slider_value').text(ui.value);
+          },
+          min: 0,
+          value: Math.round(window.json_data.length / 2),
+          max: Math.round(window.json_data.length / 2)
+        }
+      );
+      $('#slider_min').text(0);
+      $('#slider_value').text(Math.round(window.json_data.length / 2));
+      $('#slider_max').text(Math.round(window.json_data.length / 2));
+    }
   });
 });
 
