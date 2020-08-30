@@ -2,6 +2,7 @@ function drawPlotChart(data, x_column, y_column){
   // Size and color settings for the chart
   var totalWidth = 800;
   var totalheight = 600;
+  var xTicks = 4;
   var margin = {top: 40, right: 30, bottom: 30, left: 50},
       width = totalWidth - margin.left - margin.right,
       height = totalheight - margin.top - margin.bottom;
@@ -26,6 +27,80 @@ function drawPlotChart(data, x_column, y_column){
   var xAxisBox = plotSVG.append("g").attr("transform", "translate(40,0)");
 
   var groupCounts = _.groupBy(data, x_column);
+
+
+  const brushedx = () => {
+
+      if (d3.event.sourceEvent && d3.event.sourceEvent.isTrusted) {
+        var s = d3.event.selection || x2Scale.range();
+        this.brushRange = s;
+        var eachBand = x2Scale.step();
+        var index1 = Math.round((d3.event.selection[0] / eachBand));
+        var index2 = Math.round((d3.event.selection[1] / eachBand));
+        var newXDomain = x2Scale.domain().slice(index1, index2);
+        xScale.domain(newXDomain);
+        plotSVG.select('.x.axis').call(d3.axisBottom(xScale));
+        g.selectAll(".verticalLines")
+           .attr("x1", d => { return xScale(d.key) + barWidth/2; })
+           .attr("y1", d =>  { return yScale(d.whiskers[0]); })
+           .attr("x2", d =>  { return xScale(d.key) + barWidth/2; })
+           .attr("y2", d => { return yScale(d.whiskers[1]); })
+           .style("visibility", d => {
+             return newXDomain.indexOf(d.key) < 0? 'hidden': 'visible';
+
+           })
+
+
+           g.selectAll("rect")
+           .attr("x", d => { return xScale(d.key); })
+           .attr("y", d => { return yScale(d.quartile[0]); })
+           .style("visibility", d => {
+             return newXDomain.indexOf(d.key) < 0? 'hidden': 'visible';
+
+           })
+
+
+      }
+
+
+    }
+
+  const initBrushx = (brushRange) => {
+    console.log(brushRange)
+    var s = brushRange || x2Scale.range();
+    this.brushRange = s;
+    var eachBand = x2Scale.step();
+    var index1 = Math.round((s[0] / eachBand));
+    var index2 = Math.round((s[1] / eachBand));
+    var newXDomain = x2Scale.domain().slice(index1, index2);
+    xScale.domain(newXDomain);
+    plotSVG.select('.x.axis').call(d3.axisBottom(xScale));
+    g.selectAll(".verticalLines")
+       .attr("x1", d => { return xScale(d.key) + barWidth/2; })
+       .attr("y1", d =>  { return yScale(d.whiskers[0]); })
+       .attr("x2", d =>  { return xScale(d.key) + barWidth/2; })
+       .attr("y2", d => { return yScale(d.whiskers[1]); })
+       .style("visibility", d => {
+         return newXDomain.indexOf(d.key) < 0? 'hidden': 'visible';
+
+       })
+
+
+       g.selectAll("rect")
+       .attr("x", d => { return xScale(d.key); })
+       .attr("y", d => { return yScale(d.quartile[0]); })
+       .style("visibility", d => {
+          return newXDomain.indexOf(d.key) < 0? 'hidden': 'visible';
+       })
+
+
+       g.selectAll(".whiskers")
+           .attr("x1", lineConfig.x1)
+           .attr("y1", lineConfig.y1)
+           .attr("x2", lineConfig.x2)
+           .attr("y2", lineConfig.y2)
+
+   }
 
   // Select all values into one Array for axis scaling (min/ max)
   // and sort group counts so quantile methods work
@@ -84,7 +159,10 @@ function drawPlotChart(data, x_column, y_column){
   .domain(Object.keys(groupCounts))
   .rangeRound([0, width])
   .padding([0.5]);
-
+  var x2Scale = d3.scalePoint()
+  .domain(Object.keys(groupCounts))
+  .rangeRound([0, width])
+  .padding([0.5]);
   // Compute a global y scale based on the global counts
   var min = d3.min(globalCounts);
   var max = d3.max(globalCounts);
@@ -92,7 +170,14 @@ function drawPlotChart(data, x_column, y_column){
       .range([height, 0])
       .domain([min, max])
       .nice();
-
+      console.log(x2Scale.bandwidth(), xTicks);
+  const xBrushRange = [0, 30 * xTicks];
+  var brushx = d3.brushX()
+      .extent([
+        [0, 0],
+        [width, 10]
+      ])
+      .on("brush end", brushedx);
   // Setup the group the box plot elements will render in
   var g = plotSVG.append("g")
   .attr("transform", "translate(20,0)");
@@ -102,6 +187,7 @@ function drawPlotChart(data, x_column, y_column){
   .data(plotData)
   .enter()
   .append("line")
+  .attr("class", "verticalLines")
   .attr("x1", d => { return xScale(d.key) + barWidth/2; })
   .attr("y1", d =>  { return yScale(d.whiskers[0]); })
   .attr("x2", d =>  { return xScale(d.key) + barWidth/2; })
@@ -158,6 +244,7 @@ function drawPlotChart(data, x_column, y_column){
           .data(plotData)
           .enter()
           .append("line")
+          .attr("class", "whiskers")
           .attr("x1", lineConfig.x1)
           .attr("y1", lineConfig.y1)
           .attr("x2", lineConfig.x2)
@@ -188,6 +275,17 @@ function drawPlotChart(data, x_column, y_column){
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
+
+
+    plotSVG.append("g")
+     .attr("class", "brush")
+     .attr("id", "brushx")
+     .attr("transform", "translate(" + 0 + "," + 0 + ")")
+     .call(brushx)
+     .call(brushx.move, xBrushRange)
+
+
+   initBrushx(xBrushRange);
 
   // Quartile definition
   function boxQuartiles(d) {

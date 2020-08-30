@@ -25,6 +25,7 @@ function fileChosen(e){
        });
 
        window.json_data = json;
+       console.log(window.json_data);
 
 
   };
@@ -36,16 +37,23 @@ function onsubmit(){
   var xSelectField = document.getElementById('select_field_x').value;
   var ySelectField = document.getElementById('select_field_y').value;
   var chartType = document.getElementById('chart_type').value;
-
+  var data = window.json_data.map((item) => {
+    if(chartType == 'histogram'){
+      item[xSelectField] = parseInt(item[xSelectField]);
+    } else {
+      item[ySelectField] = parseInt(item[ySelectField]);
+    }
+    return item;
+  });
   switch (chartType) {
     case "bar":
-      drawBarChart(window.json_data, xSelectField, ySelectField);
+      drawBarChart(data, xSelectField, ySelectField);
       break;
     case "plot":
-      drawPlotChart(window.json_data, xSelectField, ySelectField);
+      drawPlotChart(data, xSelectField, ySelectField);
       break;
     case "histogram":
-      drawHistogram(window.json_data, xSelectField, ySelectField, window.bins);
+      drawHistogram(data, xSelectField, window.bins, 'income');
       break;
     default:
 
@@ -67,6 +75,8 @@ $(document).ready(function () {
   $('#chart_type').change(function(e){
 
     if(e.target.value == 'histogram'){
+      $('#select_field_y').hide();
+      $('#label_field_y').hide();
       window.bins = Math.round(window.json_data.length / 2);
       $("#bins-control").show();
       $( "#slider" ).slider(
@@ -96,11 +106,7 @@ function csvJSON(csv) {
         var obj = {};
         var currentline = lines[i].split(",");
         for (var j = 0; j < headers.length; j++) {
-            if(headers[j] != 'name' && headers[j] != 'dtg' ){
-              obj[headers[j]] = parseInt(currentline[j]);
-            } else {
-              obj[headers[j]] = currentline[j];
-            }
+          obj[headers[j]] = currentline[j];
         }
         result.push(obj);
     }
