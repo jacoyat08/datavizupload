@@ -52,6 +52,12 @@ function onsubmit(){
     case "plot":
       drawPlotChart(data, xSelectField, ySelectField);
       break;
+    case "scatter":
+      drawScatterChart(data, xSelectField, ySelectField);
+      break;
+    case "line":
+      drawLineChart(data, xSelectField, ySelectField);
+      break;
     case "histogram":
       drawHistogram(data, xSelectField, window.bins, 'income');
       break;
@@ -73,7 +79,9 @@ $(document).ready(function () {
   });
 
   $('#chart_type').change(function(e){
-
+    $('#select_field_y').show();
+    $('#label_field_y').show();
+    $("#bins-control").hide();
     if(e.target.value == 'histogram'){
       $('#select_field_y').hide();
       $('#label_field_y').hide();
