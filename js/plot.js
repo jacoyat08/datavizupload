@@ -26,7 +26,7 @@ function drawPlotChart(data, x_column, y_column){
   var yAxisBox = plotSVG.append("g").attr("transform", "translate(40,0)");
   var xAxisBox = plotSVG.append("g").attr("transform", "translate(40,0)");
 
-  var groupCounts = _.groupBy(data, x_column);
+  var groupCounts = { 'dataset': data};
 
 
   const brushedx = () => {
@@ -81,6 +81,7 @@ function drawPlotChart(data, x_column, y_column){
        .attr("x2", d =>  { return xScale(d.key) + barWidth/2; })
        .attr("y2", d => { return yScale(d.whiskers[1]); })
        .style("visibility", d => {
+         console.log(newXDomain.indexOf(d.key));
          return newXDomain.indexOf(d.key) < 0? 'hidden': 'visible';
 
        })
@@ -154,6 +155,8 @@ function drawPlotChart(data, x_column, y_column){
       });
   plotSVG.call(tip);
 
+  console.log(plotData);
+
   // Compute an ordinal xScale for the keys in plotData
   var xScale = d3.scalePoint()
   .domain(Object.keys(groupCounts))
@@ -170,8 +173,7 @@ function drawPlotChart(data, x_column, y_column){
       .range([height, 0])
       .domain([min, max])
       .nice();
-      console.log(x2Scale.bandwidth(), xTicks);
-  const xBrushRange = [0, 30 * xTicks];
+  const xBrushRange = [0, width];
   var brushx = d3.brushX()
       .extent([
         [0, 0],

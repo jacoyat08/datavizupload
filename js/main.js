@@ -34,32 +34,36 @@ function fileChosen(e){
 }
 
 function onsubmit(){
+  d3.select('#slider-svg').remove();
   var xSelectField = document.getElementById('select_field_x').value;
   var ySelectField = document.getElementById('select_field_y').value;
+  var xSelectFieldDataType = document.getElementById('select_field_x_datatype').value;
+  var ySelectFieldDataType = document.getElementById('select_field_y_datatype').value;
   var chartType = document.getElementById('chart_type').value;
   var data = window.json_data.map((item) => {
-    if(chartType == 'histogram'){
+    if(xSelectFieldDataType == 'Number'){
       item[xSelectField] = parseInt(item[xSelectField]);
-    } else {
+    }
+    if(ySelectFieldDataType == 'Number'){
       item[ySelectField] = parseInt(item[ySelectField]);
     }
     return item;
   });
   switch (chartType) {
     case "bar":
-      drawBarChart(data, xSelectField, ySelectField);
+      drawBarChart(data, xSelectField, ySelectField, xSelectFieldDataType, ySelectFieldDataType);
       break;
     case "plot":
-      drawPlotChart(data, xSelectField, ySelectField);
+      drawPlotChart(data, xSelectField, ySelectField, xSelectFieldDataType, ySelectFieldDataType);
       break;
     case "scatter":
-      drawScatterChart(data, xSelectField, ySelectField);
+      drawScatterChart(data, xSelectField, ySelectField, xSelectFieldDataType, ySelectFieldDataType);
       break;
     case "line":
-      drawLineChart(data, xSelectField, ySelectField);
+      drawLineChart(data, xSelectField, ySelectField, xSelectFieldDataType, ySelectFieldDataType);
       break;
     case "histogram":
-      drawHistogram(data, xSelectField, window.bins, 'income');
+      drawHistogram(data, xSelectField, xSelectFieldDataType);
       break;
     default:
 
@@ -69,38 +73,36 @@ function onsubmit(){
 
 
 $(document).ready(function () {
-  $("#bins-control").hide();
-
   // Listen to submit event on the <form> itself!
   $('#selectfile').submit(function (e) {
-
     e.preventDefault();
     onsubmit();
   });
 
   $('#chart_type').change(function(e){
+    $('#diagram_type').text(`${e.target.value} chart`);
     $('#select_field_y').show();
     $('#label_field_y').show();
-    $("#bins-control").hide();
+    $('#select_field_x').show();
+    $('#label_field_x').show();
+    $('#select_field_y_datatype').show();
+    $('#label_field_y_datatype').show();
+    $('#select_field_x_datatype').show();
+    $('#label_field_x_datatype').show();
     if(e.target.value == 'histogram'){
       $('#select_field_y').hide();
       $('#label_field_y').hide();
-      window.bins = Math.round(window.json_data.length / 2);
-      $("#bins-control").show();
-      $( "#slider" ).slider(
-        {
-          change: function( event, ui ) {
-            window.bins = ui.value;
-            $('#slider_value').text(ui.value);
-          },
-          min: 0,
-          value: Math.round(window.json_data.length / 2),
-          max: Math.round(window.json_data.length / 2)
-        }
-      );
-      $('#slider_min').text(0);
-      $('#slider_value').text(Math.round(window.json_data.length / 2));
-      $('#slider_max').text(Math.round(window.json_data.length / 2));
+      $('#select_field_y_datatype').hide();
+      $('#label_field_y_datatype').hide();
+      $('#select_field_x_datatype').hide();
+      $('#label_field_x_datatype').hide();
+    } else if (e.target.value == 'plot') {
+      $('#select_field_x').hide();
+      $('#label_field_x').hide();
+      $('#select_field_y_datatype').hide();
+      $('#label_field_y_datatype').hide();
+      $('#select_field_x_datatype').hide();
+      $('#label_field_x_datatype').hide();
     }
   });
 });

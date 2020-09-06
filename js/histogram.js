@@ -1,16 +1,14 @@
-function drawHistogram(data, x_column, bins, group){
+function drawHistogram(data, x_column){
+  var margin = {top: 10, right: 30, bottom: 30, left: 40},
+      width = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
+  var bins = 20;
   // set the dimensions and margins of the graph
-  var grouped = _.groupBy(data, 'variable');
-  var groups = Object.keys(grouped);
-  groups.forEach((item, i) => {
-    drawHistogramMain(grouped[item], x_column, bins, item);
-  });
+  drawHistogramMain(data, x_column, bins);
 
 
-  function drawHistogramMain(data, x_column, bins, type){
-    var margin = {top: 10, right: 30, bottom: 30, left: 40},
-        width = 960 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+  function drawHistogramMain(data, x_column, bins){
+
 
     var keys = data.map((item) => {
       return item[x_column];
@@ -31,13 +29,13 @@ function drawHistogram(data, x_column, bins, group){
         .value(function(d) { return d[x_column]; })
         .domain(x_domains)
         .thresholds(x.ticks(bins));
-    d3.select("#mainchart-" + type).remove();
+    d3.select("#mainchart").remove();
     // append the histogramSVG object to the body of the page
     // append a 'group' element to 'histogramSVG'
     // moves the 'group' element to the top left margin
     var histogramSVG = d3.select("#chart-container")
-        .append("svg")
-        .attr("id", "mainchart-" + type)
+        .insert("svg",":first-child")
+        .attr("id", "mainchart")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
@@ -72,6 +70,29 @@ function drawHistogram(data, x_column, bins, group){
         // add the y Axis
         histogramSVG.append("g")
             .call(d3.axisLeft(y));
+
+
   }
+
+  var slider = d3
+    .sliderHorizontal()
+    .min(0)
+    .max(100)
+    .step(1)
+    .silentValue(bins)
+    .width(width - margin.left)
+    .displayValue(true)
+    .on('onchange', (val) => {
+      drawHistogramMain(data, x_column, val)
+    });
+
+  d3.select('#chart-container')
+    .append('svg')
+    .attr('id', 'slider-svg')
+    .attr('width', width)
+    .attr('height', 100)
+    .append('g')
+    .attr('transform', 'translate(30,30)')
+    .call(slider);
 
 }

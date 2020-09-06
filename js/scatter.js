@@ -1,4 +1,4 @@
-function drawScatterChart(data, x_column, y_column){
+function drawScatterChart(data, x_column, y_column, x_datatype, y_datatype){
   d3.select("#mainchart").remove();
 
   // set the dimensions and margins of the graph
@@ -6,60 +6,102 @@ function drawScatterChart(data, x_column, y_column){
       width = 960 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom;
   const xTicks = 10;
-  const brushedx = () => {
+  const customeDomain = {
+    'String': (data, column) => {
+      return data.map(function(d) { return d[column]; });
+    },
+    'Number': (data, column) => {
+      return [0, d3.max(data, function(d) { return d[column] })];
+    },
+    'Date': (data, column) => {
+      return [d3.min(data, function(d) { return d[column] }), d3.max(data, function(d) { return d[column] })];
+    }
+  }
 
-      if (d3.event.sourceEvent && d3.event.sourceEvent.isTrusted) {
-        var s = d3.event.selection || x2.range();
-        var eachBand = scatter_x2.step();
-        var index1 = Math.round((s[0] / eachBand));
-        var index2 = Math.round((s[1] / eachBand));
-        var newXDomain = scatter_x2.domain().slice(index1, index2);
+  const customScale = {
+     'String': (rangeRound) => {
+       return d3.scaleBand().rangeRound(rangeRound).paddingInner(0.1);
+     },
+     'Number': (rangeRound) => {
+       return d3.scaleLinear().rangeRound(rangeRound);
+     },
+     'Date': (rangeRound) => {
+       return d3.scaleTime().range(rangeRound);
+     }
+   }
 
-        scatter_x.domain(newXDomain);
-        scatterSVG.select('.x.axis').call(d3.axisBottom(scatter_x));
-        scatterSVG
-            .selectAll("circle")
-            .style("visibility", function(d) {
+
+   const brushedx = () => {
+       if (d3.event.sourceEvent && d3.event.sourceEvent.isTrusted) {
+         var s = d3.event.selection || scatter_x2.range();
+         var newXDomain, newYDomain;
+         if(x_datatype == 'String'){
+           this.brushRange = s;
+           var eachBand = scatter_x2.step();
+           var index1 = Math.round((s[0] / eachBand));
+           var index2 = Math.round((s[1] / eachBand));
+           newXDomain = scatter_x2.domain().slice(index1, index2);
+           newYDomain = scatter_x.domain();
+           scatter_x.domain(newXDomain);
+         } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+           scatter_x.domain(s.map(scatter_x2.invert, scatter_x2));
+           newXDomain = scatter_x.domain();
+         }
+
+         scatterSVG.select('.x.axis').call(d3.axisBottom(scatter_x));
+         scatterSVG
+             .selectAll("circle")
+             .style("visibility", function(d) {
+               if(x_datatype == 'String'){
+                 return newXDomain.indexOf(d[x_column]) < 0? 'hidden': 'visible';
+               } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+                 return d[x_column] < newXDomain[0] || d[x_column] > newXDomain[1] ? 'hidden': 'visible';
+               }
+             })
+             .attr("cx", function(d) { return scatter_x(d[x_column]); })
+             .attr("cy", function(d) { return scatter_y(d[y_column]); })
+       }
+
+   }
+
+   const initBrushx = (brushRange) => {
+     var s = brushRange || x2.range();
+     var newXDomain, newYDomain;
+     if(x_datatype == 'String'){
+       this.brushRange = s;
+       var eachBand = scatter_x2.step();
+       var index1 = Math.round((s[0] / eachBand));
+       var index2 = Math.round((s[1] / eachBand));
+       newXDomain = scatter_x2.domain().slice(index1, index2);
+       newYDomain = scatter_x.domain();
+       scatter_x.domain(newXDomain);
+     } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+       scatter_x.domain(s.map(scatter_x2.invert, scatter_x2));
+       newXDomain = scatter_x.domain();
+     }
+
+
+      scatterSVG.select('.x.axis').call(d3.axisBottom(scatter_x));
+      scatterSVG
+          .selectAll("circle")
+          .style("visibility", function(d) {
+            if(x_datatype == 'String'){
               return newXDomain.indexOf(d[x_column]) < 0? 'hidden': 'visible';
-            })
-            .attr("cx", function(d) { return scatter_x(d[x_column]); })
-            .attr("cy", function(d) { return scatter_y(d[y_column]); })
-
-
-      }
-
+            } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+              return d[x_column] < newXDomain[0] || d[x_column] > newXDomain[1] ? 'hidden': 'visible';
+            }
+          })
+          .attr("cx", function(d) { return scatter_x(d[x_column]); })
+          .attr("cy", function(d) { return scatter_y(d[y_column]); })
 
     }
 
-  const initBrushx = (brushRange) => {
-    var s = brushRange || scatter_x2.range();
-    var eachBand = scatter_x2.step();
-    var index1 = Math.round((s[0] / eachBand));
-    var index2 = Math.round((s[1] / eachBand));
-    var newXDomain = scatter_x2.domain().slice(index1, index2);
 
-    scatter_x.domain(newXDomain);
-    scatterSVG.select('.x.axis').call(d3.axisBottom(scatter_x));
-    scatterSVG
-        .selectAll("circle")
-        .style("visibility", function(d) {
-          return newXDomain.indexOf(d[x_column]) < 0? 'hidden': 'visible';
-        })
-        .attr("cx", function(d) { return scatter_x(d[x_column]); })
-        .attr("cy", function(d) { return scatter_y(d[y_column]); })
-
-   }
   // set the ranges
-  var scatter_x = d3.scaleBand()
-      .rangeRound([0, width])
-      .paddingInner(0.1);
-  var scatter_x2 = d3.scaleBand()
-      .rangeRound([0, width])
-      .paddingInner(0.1);
-  var scatter_y = d3.scaleLinear().range([height, 0]);
-  var scatter_z = d3.scaleOrdinal()
-      .range(['#74cf8c', "#7d9cdb"])
-      .domain(['income', 'rent']);
+  var scatter_x = customScale[x_datatype]([0, width]);
+  var scatter_x2 = customScale[x_datatype]([0, width]);
+  var scatter_y = customScale[y_datatype]([height, 0]);
+
   // define the line
   var value_scatter_line = d3.line()
       .x(function(d) { return scatter_x(d[x_column]); })
@@ -74,16 +116,12 @@ function drawScatterChart(data, x_column, y_column){
             "translate(" + margin.left + "," + margin.top + ")");
 
 
-              // format the data
-              data.forEach(function(d) {
-                  d[x_column] = d[x_column];
-                  d[y_column] = +d[y_column];
-              });
+
 
               // Scale the range of the data
-              scatter_x.domain(data.map((d) => { return d[x_column] }));
-              scatter_x2.domain(data.map((d) => { return d[x_column] }));
-              scatter_y.domain([0, d3.max(data, function(d) { return d[y_column]; })]);
+              scatter_x.domain(customeDomain[x_datatype](data, x_column));
+              scatter_x2.domain(customeDomain[x_datatype](data, x_column));
+              scatter_y.domain(customeDomain[y_datatype](data, y_column));
 
               // // Add the value_scatter_line path.
               // scatterSVG.append("path")
@@ -98,9 +136,7 @@ function drawScatterChart(data, x_column, y_column){
                   .attr("r", 5)
                   .attr("cx", function(d) { return scatter_x(d[x_column]); })
                   .attr("cy", function(d) { return scatter_y(d[y_column]); })
-                  .style("fill", function(d) {
-                      return scatter_z(d.variable);
-                  });
+                  .style("fill", '#74cf8c');
               // Add the X Axis
               scatterSVG.append("g")
                   .attr("class", "x axis")
@@ -117,7 +153,7 @@ function drawScatterChart(data, x_column, y_column){
                     [width, 10]
                   ])
                   .on("brush end", brushedx);
-              const xBrushRange = [0, scatter_x2.bandwidth() * xTicks];
+                  const xBrushRange = [0, x_datatype == 'String'? scatter_x2.bandwidth() * xTicks: width / 4];
               scatterSVG.append("g")
                .attr("class", "brush")
                .attr("id", "brushx")

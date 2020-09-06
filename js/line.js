@@ -1,7 +1,6 @@
-function drawLineChart(data, x_column, y_column){
+function drawLineChart(data, x_column, y_column, x_datatype, y_datatype){
   d3.select("#mainchart").remove();
-  var groupedData = _.groupBy(data, 'variable');
-  console.log(groupedData);
+
   // set the dimensions and margins of the graph
   var margin = {top: 20, right: 20, bottom: 30, left: 50},
       width = 960 - margin.left - margin.right,
@@ -9,63 +8,104 @@ function drawLineChart(data, x_column, y_column){
 
 
   const xTicks = 10;
-  const brushedx = () => {
+  const customeDomain = {
+    'String': (data, column) => {
+      return data.map(function(d) { return d[column]; });
+    },
+    'Number': (data, column) => {
+      return [0, d3.max(data, function(d) { return d[column] })];
+    },
+    'Date': (data, column) => {
+      return [d3.min(data, function(d) { return d[column] }), d3.max(data, function(d) { return d[column] })];
+    }
+  }
 
-      if (d3.event.sourceEvent && d3.event.sourceEvent.isTrusted) {
-        var s = d3.event.selection || x2.range();
-        console.log(s);
-        var eachBand = line_x2.step();
-        var index1 = Math.round((s[0] / eachBand));
-        var index2 = Math.round((s[1] / eachBand));
-        var newXDomain = line_x2.domain().slice(index1, index2);
-        var newData1 = groupedData.income.slice(index1, index2);
-        var newData2 = groupedData.rent.slice(index1, index2);
+  const customScale = {
+     'String': (rangeRound) => {
+       return d3.scaleBand().rangeRound(rangeRound).paddingInner(0.1);
+     },
+     'Number': (rangeRound) => {
+       return d3.scaleLinear().rangeRound(rangeRound);
+     },
+     'Date': (rangeRound) => {
+       return d3.scaleTime().range(rangeRound);
+     }
+   }
 
-        line_x.domain(newXDomain);
-        lineSVG.select('.x.axis').call(d3.axisBottom(line_x));
-        lineSVG
-            .select(".line1")
-            .datum(newData1)
-            .attr("d", value_line_line);
-        lineSVG
-            .select(".line2")
-            .datum(newData2)
-            .attr("d", value_line_line);
 
-      }
+   const brushedx = () => {
+       if (d3.event.sourceEvent && d3.event.sourceEvent.isTrusted) {
+         var s = d3.event.selection || line_x2.range();
+         var newXDomain, newYDomain, newData1, newData2;
+         if(x_datatype == 'String'){
+           this.brushRange = s;
+           var eachBand = line_x2.step();
+           var index1 = Math.round((s[0] / eachBand));
+           var index2 = Math.round((s[1] / eachBand));
+           newXDomain = line_x2.domain().slice(index1, index2);
+           newYDomain = line_x.domain();
+           line_x.domain(newXDomain);
+           newData1 = data.slice(index1, index2);
+         } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+           line_x.domain(s.map(line_x2.invert, line_x2));
+           newXDomain = line_x.domain();
+           newData1 = data;
+         }
+
+
+         line_x.domain(newXDomain);
+         lineSVG.select('.x.axis').call(d3.axisBottom(line_x));
+         lineSVG
+             .select(".line1")
+             .datum(newData1)
+             .attr("d", value_line_line);
+         lineSVG
+             .select(".line2")
+             .datum(newData2)
+             .attr("d", value_line_line);
+
+       }
+
+   }
+
+   const initBrushx = (brushRange) => {
+     var s = brushRange || x2.range();
+     var newXDomain, newYDomain, newData1, newData2;
+     if(x_datatype == 'String'){
+       this.brushRange = s;
+       var eachBand = line_x2.step();
+       var index1 = Math.round((s[0] / eachBand));
+       var index2 = Math.round((s[1] / eachBand));
+       newXDomain = line_x2.domain().slice(index1, index2);
+       newYDomain = line_x.domain();
+       line_x.domain(newXDomain);
+       newData1 = data.slice(index1, index2);
+     } else if (x_datatype == 'Number' || x_datatype == 'Date') {
+       line_x.domain(s.map(line_x2.invert, line_x2));
+       newXDomain = line_x.domain();
+       newData1 = data;
+     }
+
+
+     line_x.domain(newXDomain);
+     lineSVG.select('.x.axis').call(d3.axisBottom(line_x));
+     lineSVG
+         .select(".line1")
+         .datum(newData1)
+         .attr("d", value_line_line);
+     lineSVG
+         .select(".line2")
+         .datum(newData2)
+         .attr("d", value_line_line);
 
 
     }
 
-  const initBrushx = (brushRange) => {
-    console.log(brushRange);
-    var s = brushRange || line_x2.range();
-    var eachBand = line_x2.step();
-    var index1 = Math.round((s[0] / eachBand));
-    var index2 = Math.round((s[1] / eachBand));
-    var newXDomain = line_x2.domain().slice(index1, index2);
 
-    line_x.domain(newXDomain);
-    lineSVG.select('.x.axis').call(d3.axisBottom(line_x));
-    lineSVG
-        .select(".line1")
-        .attr("d", value_line_line);
-    lineSVG
-        .select(".line2")
-        .attr("d", value_line_line);
-
-   }
-  // The scale for spacing each group's bar:
-  var line_x = d3.scaleBand()
-          .rangeRound([0, width])
-          .padding(0.05);
-  var line_x2 = d3.scaleBand()
-          .rangeRound([0, width])
-          .padding(0.05);
-  var line_y = d3.scaleLinear().range([height, 0]);
-  var line_z = d3.scaleOrdinal()
-      .range(['#74cf8c', "#7d9cdb"])
-      .domain(['income', 'rent']);
+  // set the ranges
+  var line_x = customScale[x_datatype]([0, width]);
+  var line_x2 = customScale[x_datatype]([0, width]);
+  var line_y = customScale[y_datatype]([height, 0]);
   // define the 1st line
   var value_line_line = d3.line()
       .x(function(d) { return line_x(d[x_column]); })
@@ -89,22 +129,17 @@ function drawLineChart(data, x_column, y_column){
 
 
             // Scale the range of the data
-            line_x.domain(groupedData.income.map((d) => { return d[x_column] }));
-            line_x2.domain(groupedData.income.map((d) => { return d[x_column] }));
-            line_y.domain([0, d3.max(groupedData.income, function(d) { return d[y_column]; })]);
+            line_x.domain(customeDomain[x_datatype](data, x_column));
+            line_x2.domain(customeDomain[x_datatype](data, x_column));
+            line_y.domain(customeDomain[y_datatype](data, y_column));
 
             // Add the value_line_line path.
             lineSVG.append("path")
-                .datum(groupedData.income)
+                .datum(data)
                 .attr("class", "line1")
                 .attr("d", value_line_line);
 
-            // Add the value_line_line2 path.
-            lineSVG.append("path")
-                .datum(groupedData.rent)
-                .attr("class", "line2")
-                .style("stroke", "red")
-                .attr("d", value_line_line2);
+
 
             // Add the X Axis
             lineSVG.append("g")
@@ -122,7 +157,7 @@ function drawLineChart(data, x_column, y_column){
                       [width, 10]
                     ])
                     .on("brush end", brushedx);
-           const xBrushRange = [0, line_x2.bandwidth() * xTicks];
+            const xBrushRange = [0, x_datatype == 'String'? line_x2.bandwidth() * xTicks: width / 4];
            lineSVG.append("g")
             .attr("class", "brush")
             .attr("id", "brushx")
