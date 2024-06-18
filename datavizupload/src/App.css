@@ -1,0 +1,52 @@
+header {
+  background: #000;
+  padding: 4px 24px;
+  color: #fff;
+  text-align: right;
+}
+aside {
+  /* background: #000; */
+  background: #8b0000;
+  width: 20%;
+  padding: 24px;
+  color: #fff;
+}
+main {
+  background: #fff;
+  width: 80%;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.main_container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.content {
+  display: flex;
+  flex: 1;
+}
+
+.group {
+  border-radius: 8px;
+  border: 1px solid #fff;
+  padding: 8px;
+}
+
+.group_title {
+  margin-bottom: 16px;
+}
+
+.axis_select {
+  margin-bottom: 8px;
+}
+
+.axis_desc {
+  margin-bottom: 32px;
+  font-size: 0.9rem;
+}
+.section {
+  margin-bottom: 48px;
+}
