@@ -50,9 +50,11 @@ main {
 .chart_container {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #fff;
+  /* width: 100%; */
 }
 .chart_title,
 .chart_description {
