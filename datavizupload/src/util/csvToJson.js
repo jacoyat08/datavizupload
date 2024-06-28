@@ -136,7 +136,57 @@ const csvToJson = (file) => {
 };
 
 function detectDataTypesAndConvertDates(json, headers) {
-  const dateFormats = ["MM/dd/yyyy", "M/d/yy"];
+  // const dateFormats = ["MM/dd/yyyy", "M/d/yy"];
+  const dateFormats = [
+    "MM/dd/yyyy",
+    "dd/MM/yyyy",
+    "yyyy/MM/dd",
+    "yyyy/dd/MM",
+    "MM-dd-yyyy",
+    "dd-MM-yyyy",
+    "yyyy-MM-dd",
+    "yyyy-dd-MM",
+    "MM.dd.yyyy",
+    "dd.MM.yyyy",
+    "yyyy.MM.dd",
+    "yyyy.dd.MM",
+    "M/d/yyyy",
+    "d/M/yyyy",
+    "yyyy/M/d",
+    "yyyy/d/M",
+    "M-d-yyyy",
+    "d-M-yyyy",
+    "yyyy-M-d",
+    "yyyy-d-M",
+    "M.d.yyyy",
+    "d.M.yyyy",
+    "yyyy.M.d",
+    "yyyy.d.M",
+    "MM/dd/yy",
+    "dd/MM/yy",
+    "yy/MM/dd",
+    "yy/dd/MM",
+    "MM-dd-yy",
+    "dd-MM-yy",
+    "yy-MM-dd",
+    "yy-dd-MM",
+    "MM.dd.yy",
+    "dd.MM.yy",
+    "yy.MM.dd",
+    "yy.dd.MM",
+    "M/d/yy",
+    "d/M/yy",
+    "yy/M/d",
+    "yy/d/M",
+    "M-d-yy",
+    "d-M-yy",
+    "yy-M-d",
+    "yy-d-M",
+    "M.d.yy",
+    "d.M.yy",
+    "yy.M.d",
+    "yy.d.M",
+  ]; // updated dateFormats to capture all possible date formats used in the upload
 
   const dataTypes = headers.map((header) => {
     let type = "String"; // Default type

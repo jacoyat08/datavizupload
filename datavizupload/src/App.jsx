@@ -1,426 +1,31 @@
-// import React, { useEffect, useState, useRef } from "react";
-// import "./App.css";
-// import { ToastContainer, toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-// import csvToJson from "./util/csvToJson";
-// import * as echarts from "echarts";
-// import { IoMdSettings } from "react-icons/io";
-// import { CgDetailsMore } from "react-icons/cg";
-// import { FaChartBar } from "react-icons/fa";
-
-// function App() {
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [csvData, setCsvData] = useState();
-//   const [jsonData, setJsonData] = useState([]);
-//   const [columnHeaders, setColumnHeaders] = useState([]);
-
-//   const [title, setTitle] = useState("");
-//   const [description, setDescription] = useState("");
-//   const [chartType, setChartType] = useState("");
-//   const [xAxis, setXAxis] = useState("");
-//   const [yAxis, setYAxis] = useState("");
-//   const chartRef = useRef(null);
-
-//   const allowedFileTypes = ["text/csv"];
-
-//   const handleFileChange = (e) => {
-//     const file = e.target.files[0];
-
-//     if (!file) {
-//       toast.error("No file selected!");
-//       return;
-//     }
-
-//     if (!allowedFileTypes.includes(file.type)) {
-//       toast.error("Only CSV files are allowed!");
-//       e.target.value = "";
-//       return;
-//     }
-
-//     setCsvData(file);
-//   };
-
-//   const getJsonFromCsv = async () => {
-//     setIsLoading(true);
-
-//     try {
-//       const { json, dataTypes } = await csvToJson(csvData);
-//       setJsonData(json);
-//       setColumnHeaders(dataTypes);
-//     } catch (error) {
-//       console.error("Error parsing CSV:", error.message);
-//       toast.error("Failed to parse CSV file.");
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (csvData) {
-//       getJsonFromCsv();
-//     }
-//   }, [csvData]);
-
-//   useEffect(() => {
-//     if (xAxis && !yAxis) {
-//       setYAxis("count");
-//     }
-//   }, [xAxis, yAxis]);
-
-//   useEffect(() => {
-//     if (chartRef.current && jsonData.length && xAxis) {
-//       renderChart();
-//     }
-//   }, [jsonData, xAxis, yAxis, chartType, title, description]);
-
-//   const processBarLineScatterData = () => {
-//     const xValues = jsonData.map((row) => row[xAxis]);
-//     let yValues;
-
-//     if (yAxis === "count") {
-//       const counts = xValues.reduce((acc, value) => {
-//         acc[value] = (acc[value] || 0) + 1;
-//         return acc;
-//       }, {});
-//       yValues = xValues.map((value) => counts[value]);
-//     } else if (
-//       columnHeaders.find((col) => col.name === yAxis)?.type === "number"
-//     ) {
-//       const sums = xValues.reduce((acc, value, index) => {
-//         acc[value] = (acc[value] || 0) + parseFloat(jsonData[index][yAxis]);
-//         return acc;
-//       }, {});
-//       yValues = xValues.map((value) => sums[value]);
-//     } else {
-//       yValues = jsonData.map((row) => row[yAxis]);
-//     }
-
-//     return { x: xValues, y: yValues };
-//   };
-
-//   const processBoxPlotData = () => {
-//     const groupedData = jsonData.reduce((acc, row) => {
-//       const key = row[xAxis];
-//       if (!acc[key]) {
-//         acc[key] = [];
-//       }
-//       acc[key].push(parseFloat(row[yAxis]));
-//       return acc;
-//     }, {});
-
-//     const boxPlotData = Object.entries(groupedData).map(([key, values]) => {
-//       values.sort((a, b) => a - b);
-//       const min = values[0];
-//       const max = values[values.length - 1];
-//       const q1 = values[Math.floor(values.length / 4)];
-//       const median = values[Math.floor(values.length / 2)];
-//       const q3 = values[Math.floor((values.length * 3) / 4)];
-//       return [min, q1, median, q3, max];
-//     });
-
-//     return {
-//       categories: Object.keys(groupedData),
-//       values: boxPlotData,
-//     };
-//   };
-
-//   const calculateHistogramBins = (data) => {
-//     const bins = [];
-//     const binSize = 5; // Adjust based on your data distribution
-//     const min = Math.min(...data);
-//     const max = Math.max(...data);
-//     const numBins = Math.ceil((max - min) / binSize);
-
-//     for (let i = 0; i < numBins; i++) {
-//       const binStart = min + i * binSize;
-//       const binEnd = binStart + binSize;
-//       const count = data.filter(
-//         (value) => value >= binStart && value < binEnd
-//       ).length;
-//       bins.push(count);
-//     }
-
-//     return bins;
-//   };
-
-//   const renderChart = () => {
-//     const chart = echarts.init(chartRef.current);
-
-//     const data =
-//       chartType === "Box-plot"
-//         ? processBoxPlotData()
-//         : processBarLineScatterData();
-
-//     let xAxisType = "category";
-//     let rotateLabel = false;
-
-//     if (chartType === "Scatter plot") {
-//       xAxisType = "value";
-//     }
-
-//     if (data.x && data.x.length > 10) {
-//       rotateLabel = true;
-//     }
-
-//     const commonOptions = {
-//       title: {
-//         text: title,
-//         subtext: description,
-//         left: "center",
-//       },
-//       tooltip: {
-//         trigger: "axis",
-//         axisPointer: {
-//           type: "cross",
-//         },
-//         formatter: (params) => {
-//           if (Array.isArray(params)) {
-//             return params
-//               .map(
-//                 (param) =>
-//                   `${param.seriesName}<br/>${xAxis}: ${param.name}<br/>${yAxis}: ${param.data}`
-//               )
-//               .join("<br/>");
-//           }
-//           return `${params.seriesName}<br/>${xAxis}: ${params.name}<br/>${yAxis}: ${params.data}`;
-//         },
-//       },
-//       xAxis: {
-//         type: xAxisType,
-//         name: xAxis,
-//         data: xAxisType === "category" ? data.x || data.categories : undefined,
-//         axisLabel: {
-//           rotate: rotateLabel ? 90 : 0,
-//         },
-//       },
-//       yAxis: {
-//         type: "value",
-//         name: yAxis === "count" ? "Count" : yAxis,
-//       },
-//       series: [],
-//     };
-
-//     const labelOption = {
-//       show: true,
-//       position: "top",
-//       formatter: "{c}",
-//     };
-
-//     switch (chartType) {
-//       case "Bar": {
-//         commonOptions.series.push({
-//           name: yAxis,
-//           type: "bar",
-//           data: data.y,
-//           itemStyle: { color: "#008b8b" },
-//           label: labelOption,
-//         });
-//         break;
-//       }
-//       case "Line": {
-//         commonOptions.series.push({
-//           name: yAxis,
-//           type: "line",
-//           data: data.y,
-//           itemStyle: { color: "#008b8b" },
-//           label: labelOption,
-//         });
-//         break;
-//       }
-//       case "Scatter plot": {
-//         commonOptions.series.push({
-//           name: yAxis,
-//           type: "scatter",
-//           data: data.y,
-//           itemStyle: { color: "#008b8b" },
-//           label: labelOption,
-//         });
-//         break;
-//       }
-//       case "Box-plot": {
-//         commonOptions.series.push({
-//           name: yAxis,
-//           type: "boxplot",
-//           data: data.values,
-//           itemStyle: { color: "#008b8b" },
-//         });
-//         break;
-//       }
-//       case "Histogram": {
-//         const bins = calculateHistogramBins(data.x);
-//         commonOptions.series.push({
-//           name: yAxis,
-//           type: "bar",
-//           data: bins,
-//           itemStyle: { color: "#008b8b" },
-//           label: labelOption,
-//         });
-//         break;
-//       }
-//       default:
-//         toast.error("Please select a chart type.");
-//         return;
-//     }
-
-//     chart.setOption(commonOptions);
-//   };
-
-//   return (
-//     <div className="main_container">
-//       <header>&copy; JaCoya Thompson</header>
-//       <div className="content">
-//         <aside>
-//           <h1>
-//             <IoMdSettings /> Control Panel
-//           </h1>
-//           <div className="section">
-//             <h3>
-//               <CgDetailsMore />
-//               Chart Details
-//             </h3>
-//             <div className="wrapper">
-//               <label htmlFor="title">Title</label>
-//               <input
-//                 type="text"
-//                 id="title"
-//                 placeholder="Enter a title for the chart"
-//                 value={title}
-//                 onChange={(e) => setTitle(e.target.value)}
-//               />
-//             </div>
-//             <div className="wrapper">
-//               <label htmlFor="desc">Description</label>
-//               <textarea
-//                 id="desc"
-//                 placeholder="Enter a description for the chart"
-//                 value={description}
-//                 onChange={(e) => setDescription(e.target.value)}
-//               />
-//             </div>
-//           </div>
-//           <div className="section">
-//             <h3>
-//               <FaChartBar />
-//               Chart Configuration
-//             </h3>
-//             <div className="wrapper">
-//               <label htmlFor="file">Select a CSV file</label>
-//               <input
-//                 type="file"
-//                 id="file"
-//                 accept="text/csv"
-//                 onChange={handleFileChange}
-//               />
-//             </div>
-//             <div className="wrapper">
-//               <label htmlFor="type">Chart type</label>
-//               <select
-//                 id="type"
-//                 value={chartType}
-//                 onChange={(e) => setChartType(e.target.value)}
-//               >
-//                 <option value="">Select Chart Type</option>
-//                 <option value="Bar">Bar</option>
-//                 <option value="Box-plot">Box-plot</option>
-//                 <option value="Scatter plot">Scatter plot</option>
-//                 <option value="Line">Line</option>
-//                 <option value="Histogram">Histogram</option>
-//               </select>
-//             </div>
-//             <div className="wrapper">
-//               <label htmlFor="xaxis">X axis</label>
-//               <select
-//                 id="xaxis"
-//                 value={xAxis}
-//                 onChange={(e) => setXAxis(e.target.value)}
-//               >
-//                 <option value="">Select X axis</option>
-//                 {columnHeaders.map((option) => (
-//                   <option key={option.name} value={option.name}>
-//                     {option.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-//             {chartType !== "Histogram" && (
-//               <>
-//                 <div className="wrapper">
-//                   <label htmlFor="yaxis">Y axis</label>
-//                   <select
-//                     id="yaxis"
-//                     value={yAxis}
-//                     onChange={(e) => setYAxis(e.target.value)}
-//                   >
-//                     <option value="">Select Y axis</option>
-//                     {columnHeaders.map((option) => (
-//                       <option key={option.name} value={option.name}>
-//                         {option.name}
-//                       </option>
-//                     ))}
-//                     <option value="count">Count</option>
-//                   </select>
-//                 </div>
-//               </>
-//             )}
-//           </div>
-//         </aside>
-//         <main>
-//           {isLoading ? (
-//             <span className="loader"></span>
-//           ) : (
-//             <div
-//               className="chart_container"
-//               ref={chartRef}
-//               style={{ width: "100%", height: "100%" }}
-//             >
-//               {/* Chart will render here */}
-//             </div>
-//           )}
-//         </main>
-//       </div>
-//       <ToastContainer
-//         position="top-center"
-//         autoClose={5000}
-//         hideProgressBar={false}
-//         newestOnTop={false}
-//         closeOnClick
-//         rtl={false}
-//         pauseOnFocusLoss
-//         draggable
-//         pauseOnHover
-//         theme="colored"
-//       />
-//     </div>
-//   );
-// }
-
-// export default App;
-
-//==========================================================
 import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Plot from "react-plotly.js";
 import csvToJson from "./util/csvToJson";
-import { IoMdSettings } from "react-icons/io";
-import { CgDetailsMore } from "react-icons/cg";
-import { FaChartBar } from "react-icons/fa";
+import Plot from "react-plotly.js";
+import { FaTools } from "react-icons/fa";
+import { GrDocumentImage } from "react-icons/gr";
+import html2canvas from "html2canvas";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [csvData, setCsvData] = useState();
+  const [csvData, setCsvData] = useState(null);
   const [jsonData, setJsonData] = useState([]);
   const [columnHeaders, setColumnHeaders] = useState([]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [chartType, setChartType] = useState("");
+  const [xAxisOptions, setXAxisOptions] = useState([]);
+  const [yAxisOptions, setYAxisOptions] = useState([]);
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
-  const chartRef = useRef(null);
+  const [chartData, setChartData] = useState({});
+  const [binSize, setBinSize] = useState(5);
+  const [binSizeRange, setBinSizeRange] = useState({ min: 1, max: 20 });
 
   const allowedFileTypes = ["text/csv"];
+  const chartRef = useRef(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -440,18 +45,82 @@ function App() {
   };
 
   const getJsonFromCsv = async () => {
-    setIsLoading(true);
-
     try {
       const { json, dataTypes } = await csvToJson(csvData);
       setJsonData(json);
       setColumnHeaders(dataTypes);
     } catch (error) {
-      console.error("Error parsing CSV:", error.message);
-      toast.error("Failed to parse CSV file.");
-    } finally {
-      setIsLoading(false);
+      toast.error(
+        "Failed to read selected file. Please ensure a valid CSV file is selected."
+      );
     }
+  };
+
+  const populateAxesAndSetData = () => {
+    let filteredXAxisOptions;
+    let filteredYAxisOptions;
+
+    let x;
+    let y;
+
+    if (chartType === "bar" || chartType === "line" || chartType === "box") {
+      filteredXAxisOptions = columnHeaders.filter(
+        (column) => column.type === "String" || column.type === "Date"
+      );
+
+      filteredYAxisOptions = columnHeaders.filter(
+        (column) => column.type === "Number"
+      );
+
+      x = jsonData.map((item) => item[xAxis]);
+      y = jsonData.map((item) => Number(item[yAxis]));
+    } else if (chartType === "scatter") {
+      filteredXAxisOptions = columnHeaders.filter(
+        (column) => column.type === "Number" && column.name !== yAxis
+      );
+
+      filteredYAxisOptions = columnHeaders.filter(
+        (column) => column.type === "Number" && column.name !== xAxis
+      );
+
+      x = jsonData.map((item) => Number(item[xAxis]));
+      y = jsonData.map((item) => Number(item[yAxis]));
+    } else if (chartType === "histogram") {
+      filteredXAxisOptions = columnHeaders.filter(
+        (column) => column.type === "Number"
+      );
+
+      filteredYAxisOptions = null;
+
+      x = jsonData.map((item) => Number(item[xAxis]));
+      y = null;
+
+      // Calculate min and max values for selected x-axis field
+      const xValues = x.map((item) => Number(item));
+      const minValue = Math.min(...xValues);
+      const maxValue = Math.max(...xValues);
+
+      // Update bin size range based on data
+      setBinSizeRange({ min: minValue, max: maxValue });
+    } else {
+      return;
+    }
+
+    setXAxisOptions(filteredXAxisOptions);
+    setYAxisOptions(filteredYAxisOptions);
+
+    const dataConfig = {
+      x,
+      y,
+      type: chartType,
+      marker: { color: "red" }, // example of additional data formatting
+    };
+
+    if (chartType === "histogram") {
+      dataConfig.xbins = { size: binSize };
+    }
+
+    setChartData(dataConfig);
   };
 
   useEffect(() => {
@@ -461,296 +130,235 @@ function App() {
   }, [csvData]);
 
   useEffect(() => {
+    populateAxesAndSetData();
+  }, [chartType, columnHeaders, xAxis, yAxis, binSize]);
+
+  useEffect(() => {
     if (xAxis && !yAxis) {
       setYAxis("count");
     }
   }, [xAxis, yAxis]);
 
-  const processBarLineScatterData = () => {
-    const xValues = jsonData.map((row) => row[xAxis]);
-    let yValues;
-
-    if (yAxis === "count") {
-      const counts = xValues.reduce((acc, value) => {
-        acc[value] = (acc[value] || 0) + 1;
-        return acc;
-      }, {});
-      yValues = xValues.map((value) => counts[value]);
-    } else if (
-      columnHeaders.find((col) => col.name === yAxis)?.type === "Number"
-    ) {
-      const sums = xValues.reduce((acc, value, index) => {
-        acc[value] = (acc[value] || 0) + parseFloat(jsonData[index][yAxis]);
-        return acc;
-      }, {});
-      yValues = xValues.map((value) => sums[value]);
-    } else {
-      yValues = jsonData.map((row) => row[yAxis]);
+  const handleDownloadAsPNG = () => {
+    if (chartRef.current) {
+      html2canvas(chartRef.current)
+        .then((canvas) => {
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png");
+          link.download = "chart.png";
+          link.click();
+        })
+        .catch((error) => {
+          toast.error("Error capturing the chart:", error);
+        });
     }
-
-    return { x: xValues, y: yValues };
-  };
-
-  const processBoxPlotData = () => {
-    const groupedData = jsonData.reduce((acc, row) => {
-      const key = row[xAxis];
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(parseFloat(row[yAxis]));
-      return acc;
-    }, {});
-
-    const boxPlotData = Object.entries(groupedData).map(([key, values]) => {
-      values.sort((a, b) => a - b);
-      const min = values[0];
-      const max = values[values.length - 1];
-      const q1 = values[Math.floor(values.length / 4)];
-      const median = values[Math.floor(values.length / 2)];
-      const q3 = values[Math.floor((values.length * 3) / 4)];
-      return {
-        x: key,
-        y: [min, q1, median, q3, max],
-      };
-    });
-
-    return {
-      categories: Object.keys(groupedData),
-      values: boxPlotData.map((item) => item.y),
-    };
-  };
-
-  const calculateHistogramBins = (data) => {
-    const bins = [];
-    const binSize = 5; // Adjust based on your data distribution
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const numBins = Math.ceil((max - min) / binSize);
-
-    for (let i = 0; i < numBins; i++) {
-      const binStart = min + i * binSize;
-      const binEnd = binStart + binSize;
-      const count = data.filter(
-        (value) => value >= binStart && value < binEnd
-      ).length;
-      bins.push(count);
-    }
-
-    return bins;
-  };
-
-  const renderChart = () => {
-    const data =
-      chartType === "Box-plot"
-        ? processBoxPlotData()
-        : processBarLineScatterData();
-
-    let xAxisType = "category";
-    if (chartType === "Scatter plot") {
-      xAxisType = "value";
-    }
-
-    const chartData = [];
-    switch (chartType) {
-      case "Bar": {
-        chartData.push({
-          x: data.x,
-          y: data.y,
-          type: "bar",
-          name: yAxis,
-        });
-        break;
-      }
-      case "Line": {
-        chartData.push({
-          x: data.x,
-          y: data.y,
-          type: "scatter",
-          mode: "lines",
-          name: yAxis,
-        });
-        break;
-      }
-      case "Scatter plot": {
-        chartData.push({
-          x: data.x,
-          y: data.y,
-          type: "scatter",
-          mode: "markers",
-          name: yAxis,
-        });
-        break;
-      }
-      case "Box-plot": {
-        chartData.push({
-          y: data.values,
-          x: data.categories,
-          type: "box",
-          name: yAxis,
-        });
-        break;
-      }
-      case "Histogram": {
-        const bins = calculateHistogramBins(data.x);
-        chartData.push({
-          x: bins,
-          type: "bar",
-          name: yAxis,
-        });
-        break;
-      }
-      default: {
-        toast.error("Please select a chart type.");
-        return;
-      }
-    }
-
-    const layout = {
-      title: {
-        text: title,
-        font: {
-          size: 18,
-          bold: true,
-        },
-      },
-      xaxis: {
-        title: {
-          text: xAxis,
-          font: {
-            size: 14,
-          },
-        },
-        type: xAxisType,
-      },
-      yaxis: {
-        title: {
-          text: yAxis === "count" ? "Count" : yAxis,
-          font: {
-            size: 14,
-          },
-        },
-      },
-      showlegend: true,
-      height: 700,
-      // width: "100%",
-    };
-
-    return (
-      <Plot
-        data={chartData}
-        layout={layout}
-        useResizeHandler
-        style={{ width: "100%", height: "100%" }}
-      />
-    );
   };
 
   return (
     <div className="main_container">
-      <header>&copy; JaCoya Thompson</header>
+      {/* <header>&copy; JaCoya Thompson</header> */}
       <div className="content">
         <aside>
           <h1>
-            <IoMdSettings /> Control Panel
+            <FaTools /> Chart Setup
           </h1>
-          <div className="section">
-            <h3>
-              <CgDetailsMore />
-              Chart Details
-            </h3>
-            <div className="wrapper">
-              <label htmlFor="title">Title</label>
-              <input
-                type="text"
-                id="title"
-                placeholder="Enter a title for the chart"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="wrapper">
-              <label htmlFor="desc">Description</label>
-              <textarea
-                id="desc"
-                placeholder="Enter a description for the chart"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+
+          <div className="wrapper">
+            <label htmlFor="title">Title</label>
+            <input
+              type="text"
+              id="title"
+              placeholder="Enter a title for the chart"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
-          <div className="section">
-            <h3>
-              <FaChartBar />
-              Chart Configuration
-            </h3>
-            <div className="wrapper">
-              <label htmlFor="file">Select a CSV file</label>
-              <input
-                type="file"
-                id="file"
-                accept="text/csv"
-                onChange={handleFileChange}
-              />
-            </div>
-            <div className="wrapper">
-              <label htmlFor="type">Chart type</label>
-              <select
-                id="type"
-                value={chartType}
-                onChange={(e) => setChartType(e.target.value)}
-              >
-                <option value="">Select Chart Type</option>
-                <option value="Bar">Bar</option>
-                <option value="Box-plot">Box-plot</option>
-                <option value="Scatter plot">Scatter plot</option>
-                <option value="Line">Line</option>
-                <option value="Histogram">Histogram</option>
-              </select>
-            </div>
-            <div className="wrapper">
-              <label htmlFor="xaxis">X axis</label>
-              <select
-                id="xaxis"
-                value={xAxis}
-                onChange={(e) => setXAxis(e.target.value)}
-              >
-                <option value="">Select X Axis</option>
-                {columnHeaders.map((col) => (
-                  <option key={col.name} value={col.name}>
-                    {col.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="wrapper">
-              <label htmlFor="yaxis">Y axis</label>
-              <select
-                id="yaxis"
-                value={yAxis}
-                onChange={(e) => setYAxis(e.target.value)}
-              >
-                <option value="">Select Y Axis</option>
-                {columnHeaders
-                  .filter((col) => col.type === "Number")
-                  .map((col) => (
-                    <option key={col.name} value={col.name}>
-                      {col.name}
-                    </option>
-                  ))}
-                <option value="count">Count</option>
-              </select>
-            </div>
+          <div className="wrapper">
+            <label htmlFor="desc">Description</label>
+            <textarea
+              id="desc"
+              placeholder="Enter a description for the chart"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
+
+          <div className="wrapper">
+            <label htmlFor="file">Select a CSV file</label>
+            <input
+              type="file"
+              id="file"
+              accept="text/csv"
+              onChange={handleFileChange}
+            />
+          </div>
+          {!csvData ? null : (
+            <>
+              <div className="wrapper">
+                <label htmlFor="type">Chart type</label>
+                <select
+                  id="type"
+                  value={chartType}
+                  onChange={(e) => setChartType(e.target.value)}
+                >
+                  <option value="">Select Chart Type</option>
+                  <option value="bar">Bar</option>
+                  <option value="line">Line</option>
+                  <option value="scatter">Scatter plot</option>
+                  <option value="histogram">Histogram</option>
+                  <option value="box">Box-plot</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {!chartType || chartType === "" ? null : (
+            <>
+              <div className="wrapper">
+                <label htmlFor="xaxis">X axis</label>
+                <select
+                  id="xaxis"
+                  value={xAxis}
+                  onChange={(e) => setXAxis(e.target.value)}
+                >
+                  <option value="">Select X axis</option>
+                  {xAxisOptions &&
+                    xAxisOptions.map((option) => (
+                      <option key={option.name} value={option.name}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          {chartType === "histogram" ? (
+            <>
+              <div className="wrapper">
+                <label htmlFor="binSize">
+                  Bin size: {binSize} (Range: {binSizeRange.min} -{" "}
+                  {binSizeRange.max})
+                </label>
+                <input
+                  type="range"
+                  className="slider"
+                  id="binSize"
+                  min={binSizeRange.min}
+                  max={binSizeRange.max}
+                  step={1}
+                  value={binSize}
+                  onChange={(e) => setBinSize(e.target.value)}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {!xAxis || xAxis === "" || chartType === "histogram" ? null : (
+            <>
+              <div className="wrapper">
+                <label htmlFor="yaxis">Y axis</label>
+                <select
+                  id="yaxis"
+                  value={yAxis}
+                  onChange={(e) => setYAxis(e.target.value)}
+                >
+                  <option value="">Select Y axis</option>
+                  {yAxisOptions &&
+                    yAxisOptions.map((option) => (
+                      <option key={option.name} value={option.name}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          )}
         </aside>
         <main>
-          <div className="chart_container">
-            {/* <h1>{title}</h1>
-            <p>{description}</p> */}
-            {isLoading ? <p>Loading...</p> : renderChart()}
+          <div
+            className="chart_container"
+            style={{ width: "100%", height: "100%" }}
+            ref={chartRef}
+          >
+            <div className="chart_header">
+              <h2 className="title">{title}</h2>
+              <h4 className="description">{description}</h4>
+            </div>
+            <div className="chart_main">
+              {!csvData ? (
+                "Upload CSV dataset to see configuration options"
+              ) : (
+                <Plot
+                  data={[
+                    {
+                      x: chartData.x,
+                      y: chartData.y,
+                      type: chartData.type,
+
+                      mode:
+                        chartType === "scatter" ? "markers" : "lines+markers",
+                      marker: { color: "#ff4500" },
+                      ...(chartType === "histogram" && {
+                        xbins: { size: binSize },
+                      }),
+                    },
+                  ]}
+                  layout={{
+                    font: { family: "'Nunito', sans-serif" },
+                    margin: { l: 50, r: 0, b: 100, t: 0, pad: 0 },
+                    autosize: true,
+                    // title: title,
+                    xaxis: { title: xAxis },
+                    yaxis: {
+                      title: chartType === "histogram" ? "Frequency" : yAxis,
+                    },
+                  }}
+                  config={{
+                    displayModeBar: false,
+                  }}
+                  style={{ width: "100%", height: "100%" }}
+                  useResizeHandler={true}
+                />
+              )}
+            </div>
           </div>
+          {xAxis && (
+            <>
+              <div className="downloadControls">
+                <button
+                  className="downloadBtn"
+                  title="Download as PNG"
+                  onClick={handleDownloadAsPNG}
+                >
+                  <GrDocumentImage />
+                </button>
+              </div>
+            </>
+          )}
         </main>
       </div>
-      <ToastContainer />
+      <footer>
+        <span>&copy; 2024 JaCoya Thompson</span>
+        <span>
+          Built by{" "}
+          <a href="https://www.upwork.com/freelancers/~01502fac21fd11e46a?s=1110580755107926016">
+            Ibanga Ibanga
+          </a>
+        </span>
+      </footer>
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }
