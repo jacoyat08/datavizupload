@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "convert-csv-to-json": "^2.48.0",
+    "date-fns": "^3.6.0",
+    "install": "^0.13.0",
+    "npm": "^10.8.1",
+    "react-toastify": "^10.0.5"
+  }
+}
